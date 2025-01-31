@@ -4,6 +4,7 @@ import 'package:todo/login_screen.dart';
 import 'package:todo/storage.dart';
 import 'package:todo/api.dart';
 import 'package:todo/classes.dart';
+import 'package:todo/todo_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -68,7 +69,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                     },
                   ),
+                  trailing: IconButton(icon: Icon(Icons.delete),
+                    onPressed: () async {
+                        await deleteTodo(todo.id);
+                        setState(() {
+                          snapshot.data!.removeAt(index);
+                        });
+                    },
+                  ),
+
                   title: Text(todo.title),
+                  onTap: () async{
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TodoPage(todo: snapshot.data![index]),
+                      ),
+                    );
+                  },
                   subtitle: Text(todo.description)
               );
             },
