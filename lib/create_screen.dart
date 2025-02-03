@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:todo/api.dart';
+import 'package:todo/api_service.dart';
 import 'package:todo/home_screen.dart';
+import 'package:image_picker/image_picker.dart';
 
 class Create extends StatefulWidget {
   @override
@@ -8,8 +11,27 @@ class Create extends StatefulWidget {
 }
 
 class _CreateState extends State<Create> {
+  File? _image;
+  final picker = ImagePicker();
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+      if (pickedFile == null) return;
+
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    } catch (e) {
+      print('Error picking image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: $e')),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -48,6 +70,16 @@ class _CreateState extends State<Create> {
                     hintText: 'Enter description'),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(
+                  left: 15.0, right: 15.0, top: 15, bottom: 0),
+              child: TextButton(
+               onPressed: () async {
+                  await _pickImage();
+               },
+                child: Text("Upload Image"),
+              ),
+            ),
             Container(
               height: 50,
               width: 250,
@@ -59,7 +91,7 @@ class _CreateState extends State<Create> {
                 onPressed: () async {
                   try {
                     print("pressed");
-                    if(await createTodo(titleController.text, descriptionController.text)){
+                    if(await createTodo(titleController.text, descriptionController.text, _image)){
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(builder: (context) => HomeScreen()),
                       );

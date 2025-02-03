@@ -2,10 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:todo/storage.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:todo/classes.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -112,7 +110,7 @@ Future<void> completeTodo(String uuid) async {
   }
 }
 
-Future<bool> createTodo(String title, String description) async {
+Future<bool> createTodo(String title, String description, File? file) async {
   final token = await StorageService.getToken();
 
   var request = http.MultipartRequest('POST', Uri.parse("http://10.0.2.2:3000/todo/"));
@@ -123,12 +121,15 @@ Future<bool> createTodo(String title, String description) async {
 
   request.fields['title'] = title;
   request.fields['description'] = description;
+  if(file != null) {
+    request.files.add(await http.MultipartFile.fromPath('files', file.path));
+  }
 
   try {
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       print("todo created");
       return true;
     } else {
@@ -156,91 +157,75 @@ Future<bool> deleteTodo(String uuid) async {
 
 
 Future<bool> requestStoragePermission(BuildContext context) async {
-  // Check Android version
   if (Platform.isAndroid) {
-    // For Android 13 and above
-    final statuses = await [
-      Permission.photos,
-      Permission.videos,
-      Permission.audio,
-      Permission.storage,
-      Permission.manageExternalStorage,
-    ].request();
+    if (await Permission.photos.status.isDenied ||
+        await Permission.videos.status.isDenied ||
+        await Permission.audio.status.isDenied) {
 
-    // Check if any permissions are permanently denied
-    bool isPermanentlyDenied = statuses.values.any(
-            (status) => status.isPermanentlyDenied
-    );
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.photos,
+        Permission.videos,
+        Permission.audio,
+      ].request();
 
-    if (isPermanentlyDenied) {
-      // Show a dialog to guide user to app settings
-      await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Permission Required'),
-          content: Text('Storage permissions are required. Please enable them in app settings.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                openAppSettings();
-                Navigator.of(context).pop();
-              },
-              child: Text('Open Settings'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
-            ),
-          ],
-        ),
-      );
-      return false;
+      bool allGranted = statuses.values.every((status) => status.isGranted);
+
+      if (!allGranted) {
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Permission Required'),
+            content: Text('Media permissions are required. Please enable them in app settings.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  openAppSettings();
+                  Navigator.of(context).pop();
+                },
+                child: Text('Open Settings'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('Cancel'),
+              ),
+            ],
+          ),
+        );
+        return false;
+      }
     }
-
-    // Check if all required permissions are granted
-    bool allGranted = statuses.values.every(
-            (status) => status.isGranted
-    );
-
-    return allGranted;
+    return true;
   }
-
-  // For non-Android platforms
   return true;
 }
 
-// Modify your download method to use this
-Future<String> downloadFile(BuildContext context, String id) async {
-  // First, request permissions
-  bool permissionsGranted = await requestStoragePermission(context);
-
-  if (!permissionsGranted) {
-    return 'Permissions not granted';
-  }
-
+Future<bool> downloadFile(BuildContext context, String id) async {
   try {
     String? token = await StorageService.getToken();
-    if (token == null) {
-      return 'Authentication token unavailable';
-    }
-
     final response = await http.get(
       Uri.parse("http://10.0.2.2:3000/todo/$id/files"),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode != 200) {
-      return 'Download failed with status code: ${response.statusCode}';
+      print('Download failed with status code: ${response.statusCode}');
+      return false;
     }
 
-    // Use a more reliable directory for saving files
-    final downloadsDir = await getApplicationDocumentsDirectory();
-    final filePath = '${downloadsDir.path}/downloaded_file_$id';
+    String fileName = response.headers['content-disposition']?.split('filename=').last ?? 'downloaded_file_$id';
+    fileName = fileName.replaceAll('"', '');
+
+    Directory? downloadDir;
+    downloadDir = Directory('/storage/emulated/0/Download');
+
+    final filePath = '${downloadDir.path}/$fileName';
     final file = File(filePath);
     await file.writeAsBytes(response.bodyBytes);
 
-    return filePath;
-  } catch (ex) {
-    return 'Download error: $ex';
+    print('File saved to: $filePath');
+    return true;
+  } catch (e) {
+    print('Error downloading file: $e');
+    return false;
   }
 }
