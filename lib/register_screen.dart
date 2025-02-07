@@ -29,6 +29,7 @@ class _RegisterState extends State<Register> {
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
+            SizedBox(height: 20),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 15),
               child: TextField(
@@ -39,6 +40,7 @@ class _RegisterState extends State<Register> {
                     hintText: 'Username'),
               ),
             ),
+            SizedBox(height: 20),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 15),
               child: TextField(
@@ -61,6 +63,7 @@ class _RegisterState extends State<Register> {
                     hintText: 'Enter password'),
               ),
             ),
+            SizedBox(height: 20),
             Container(
               height: 50,
               width: 250,
@@ -73,6 +76,9 @@ class _RegisterState extends State<Register> {
                   try {
                     print("pressed");
                     await register(emailController.text, usernameController.text, passwordController.text);
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => Login()),
+                    );
                   } catch (e) {
                     print("Error during registration: $e");
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -97,7 +103,7 @@ class _RegisterState extends State<Register> {
               },
               child: Padding(
                 padding: EdgeInsets.all(10.0),
-                child: Text("Login", style: TextStyle(color: Colors.blue),),
+                child: Text("Login", style: TextStyle(color: Colors.blue, fontSize: 16),),
               ),
             )
           ],

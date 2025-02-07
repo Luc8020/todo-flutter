@@ -26,8 +26,10 @@ class _LoginState extends State<Login> {
         title: Text("Login Page"),
       ),
       body: SingleChildScrollView(
-        child: Column(
+        child:
+        Column(
           children: <Widget>[
+            SizedBox(height: 20),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 15),
               child: TextField(
@@ -50,6 +52,7 @@ class _LoginState extends State<Login> {
                     hintText: 'Enter password'),
               ),
             ),
+            SizedBox(height: 20),
             Container(
               height: 50,
               width: 250,
@@ -90,7 +93,7 @@ class _LoginState extends State<Login> {
         },
         child: Padding(
           padding: EdgeInsets.all(10.0),
-          child: Text("Register", style: TextStyle(color: Colors.blue),),
+          child: Text("Register", style: TextStyle(color: Colors.blue, fontSize: 16),),
         ),
       )
           ],

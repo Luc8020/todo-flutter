@@ -59,6 +59,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     value: todo.completed,
                     onChanged: (bool? value) {
                       completeTodo(todo.id);
+                      if(!todo.completed) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Todo completed')),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Todo not completed')),
+                        );
+                      }
                       setState(() {
                         snapshot.data![index] = Todo(
                             id: todo.id,
@@ -75,6 +84,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         setState(() {
                           snapshot.data!.removeAt(index);
                         });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Todo deleted')),
+                        );
                     },
                   ),
 

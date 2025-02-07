@@ -45,6 +45,12 @@ class _CreateState extends State<Create> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text("Create-Todo Page"),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -76,6 +82,9 @@ class _CreateState extends State<Create> {
               child: TextButton(
                onPressed: () async {
                   await _pickImage();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Image uploaded')),
+                  );
                },
                 child: Text("Upload Image"),
               ),
@@ -95,6 +104,9 @@ class _CreateState extends State<Create> {
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(builder: (context) => HomeScreen()),
                       );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Todo created')),
+                      );
                     }
                   } catch (e) {
                     print("Error during creation: $e");
@@ -111,17 +123,6 @@ class _CreateState extends State<Create> {
             ),
             SizedBox(
               height: 130,
-            ),
-            InkWell(
-              onTap: () {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => HomeScreen()),
-                );
-              },
-              child: Padding(
-                padding: EdgeInsets.all(10.0),
-                child: Text("Todos", style: TextStyle(color: Colors.blue),),
-              ),
             )
           ],
         ),
